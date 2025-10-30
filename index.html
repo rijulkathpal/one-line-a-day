@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Line a Day ✍️</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9fafb;
+      color: #111;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 1rem;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 1em;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: none;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #6366f1;
+      color: white;
+      padding: 0.75em 1.25em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #4f46e5;
+    }
+
+    h2 {
+      margin-top: 2em;
+      margin-bottom: 0.5em;
+    }
+
+    .entry {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1em;
+      margin-bottom: 1em;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .entry-date {
+      font-weight: bold;
+      margin-bottom: 0.5em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>One Line a Day ✍️</h1>
+  
+  <textarea id="entryText" rows="3" placeholder="Write your line for today..."></textarea>
+  <br>
+  <button onclick="saveEntry()">Save</button>
+  
+  <h2>Your Entries</h2>
+  <div id="entriesList"></div>
+
+  <script>
+    async function loadEntries() {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/entries');
+        const data = await res.json();
+        const list = document.getElementById('entriesList');
+        list.innerHTML = '';
+        data.slice().reverse().forEach(entry => {
+          const div = document.createElement('div');
+          div.className = 'entry';
+          div.innerHTML = `
+            <div class="entry-date">${entry.date}</div>
+            <div>${entry.text}</div>
+          `;
+          list.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load entries.');
+      }
+    }
+
+    async function saveEntry() {
+      const text = document.getElementById('entryText').value.trim();
+      const today = new Date().toISOString().split('T')[0];
+      if (!text) return alert("You can't submit an empty entry!");
+      try {
+        const res = await fetch('http://127.0.0.1:8000/entries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: today, text })
+        });
+        if (res.ok) {
+          document.getElementById('entryText').value = '';
+          loadEntries();
+        } else {
+          const err = await res.json();
+          alert(err.detail);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Couldn't connect to the backend.");
+      }
+    }
+
+    loadEntries();
+  </script>
+</body>
+</html>
